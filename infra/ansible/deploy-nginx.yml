@@ -1,0 +1,57 @@
+- name: Configurar Nginx como reverse proxy para backend
+  hosts: backend
+  become: yes
+
+  vars:
+    service_name: backend-app
+
+  tasks:
+    - name: Instalar Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Crear configuración de Nginx para backend
+      copy:
+        dest: /etc/nginx/sites-available/backend.conf
+        content: |
+          server {
+              listen 80;
+              server_name _;
+
+              location / {
+                  proxy_pass http://localhost:3000;
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection 'upgrade';
+                  proxy_set_header Host $host;
+                  proxy_cache_bypass $http_upgrade;
+              }
+
+              location /health {
+                  proxy_pass http://localhost:3000/health;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+              }
+          }
+
+    - name: Activar configuración de backend
+      file:
+        src: /etc/nginx/sites-available/backend.conf
+        dest: /etc/nginx/sites-enabled/backend.conf
+        state: link
+        force: yes
+
+    - name: Eliminar configuración por defecto
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Probar configuración de Nginx
+      command: nginx -t
+
+    - name: Recargar Nginx
+      service:
+        name: nginx
+        state: reloaded

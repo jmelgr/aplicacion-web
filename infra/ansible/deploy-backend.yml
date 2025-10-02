@@ -1,0 +1,81 @@
+---
+- name: Desplegar aplicación backend Node.js
+  hosts: backend
+  become: yes
+
+  vars:
+    app_dir: /home/ubuntu/backend
+    node_version: "18.x"   # Versión LTS estable de Node.js según la documentación que hemos leído de la zona geográfica
+    service_name: backend-app
+
+  tasks:
+    - name: Instalar dependencias básicas
+      apt:
+        name:
+          - curl
+          - software-properties-common
+        update_cache: yes
+
+    - name: Instalar Node.js {{ node_version }}
+      shell: |
+        curl -fsSL https://deb.nodesource.com/setup_{{ node_version }} | bash -
+        apt-get install -y nodejs
+      args:
+        creates: /usr/bin/node
+
+    - name: Crear directorio de la aplicación
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Copiar archivos del backend
+      copy:
+        src: "{{ item }}"
+        dest: "{{ app_dir }}/"
+        owner: ubuntu
+        group: ubuntu
+      with_items:
+        - "{{ playbook_dir }}/../../backend/app.js"
+        - "{{ playbook_dir }}/../../backend/package.json"
+
+    - name: Instalar dependencias con npm
+      npm:
+        path: "{{ app_dir }}"
+        production: yes
+
+    - name: Crear directorio de uploads
+      file:
+        path: "{{ app_dir }}/uploads"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Crear servicio systemd para backend
+      copy:
+        dest: /etc/systemd/system/{{ service_name }}.service
+        content: |
+          [Unit]
+          Description=Backend Node.js App
+          After=network.target
+
+          [Service]
+          ExecStart=/usr/bin/node {{ app_dir }}/app.js
+          Restart=always
+          User=ubuntu
+          Environment=PORT=3000
+          WorkingDirectory={{ app_dir }}
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: Reiniciar backend
+
+  handlers:
+    - name: Reiniciar backend
+      systemd:
+        name: "{{ service_name }}"
+        state: restarted
+        enabled: yes

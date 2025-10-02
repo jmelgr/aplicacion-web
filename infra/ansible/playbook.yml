@@ -1,0 +1,31 @@
+---
+- name: Configuración inicial de los servidores backend
+  hosts: backend
+  become: yes
+  tasks:
+    - name: Actualizar paquetes del sistema
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Instalar Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Crear página personalizada
+      copy:
+        dest: /var/www/html/index.html
+        content: |
+          <html>
+          <head><title>Backend funcionando </title></head>
+          <body>
+            <h1>Hola desde {{ inventory_hostname }}</h1>
+          </body>
+          </html>
+
+    - name: Habilitar y arrancar Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes

@@ -1,0 +1,29 @@
+---
+- name: Update apt and install NodeJS, npm, git
+  apt:
+    update_cache: yes
+    name:
+      - nodejs
+      - npm
+      - git
+    state: present
+
+- name: Ensure application directory exists
+  file:
+    path: /opt/{{ project_name }}
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Create .env with RDS endpoint
+  copy:
+    dest: /opt/{{ project_name }}/.env
+    content: |
+      RDS_ENDPOINT={{ rds_endpoint }}
+      S3_BUCKET={{ s3_bucket_name }}
+      SQS_QUEUE={{ sqs_queue_url }}
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+

@@ -1,0 +1,5 @@
+---
+project_name: "proyecto-grupo6"
+rds_endpoint: "terraform-20250929183108946400000001.ckhm224smd7a.us-east-1.rds.amazonaws.com:5432"
+s3_bucket_name: "proyecto-grupo6-files-bucket"
+sqs_queue_url: "https://sqs.us-east-1.amazonaws.com/518474287858/proyecto-grupo6-file-queue"
