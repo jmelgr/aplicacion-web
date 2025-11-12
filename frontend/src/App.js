@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Login from "./Login";
+import { whoami } from "./services/authService";
 import { v4 as uuidv4 } from "uuid";
 
-function App() {
+function FileUploader() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
@@ -17,7 +19,6 @@ function App() {
 
   const handleUpload = async () => {
     if (!file) return;
-
     const formData = new FormData();
     formData.append("file", file);
 
@@ -30,7 +31,6 @@ function App() {
         }
       );
       const data = await res.json();
-
       const fileCode = uuidv4();
       setMessage(`Archivo subido: ${data.originalName}`);
       setDownloadUrl(
@@ -42,12 +42,12 @@ function App() {
   };
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black text-green-400 font-mono">
-      <div
-        className="w-full h-full flex flex-col items-center justify-center border-4 border-dashed border-green-500 rounded-lg transition-all duration-300 hover:bg-black/40"
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-      >
+    <div
+      className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black text-green-400 font-mono"
+      onDrop={handleDrop}
+      onDragOver={(e) => e.preventDefault()}
+    >
+      <div className="w-full h-full flex flex-col items-center justify-center border-4 border-dashed border-green-500 rounded-lg transition-all duration-300 hover:bg-black/40">
         <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-widest text-green-400 drop-shadow-lg">
           404 FILES
         </h1>
@@ -88,6 +88,25 @@ function App() {
         )}
       </div>
     </div>
+  );
+}
+
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      whoami(token).then((data) => {
+        if (data.ok) setIsLoggedIn(true);
+      });
+    }
+  }, []);
+
+  return isLoggedIn ? (
+    <FileUploader />
+  ) : (
+    <Login onLogin={() => setIsLoggedIn(true)} />
   );
 }
 
