@@ -13,12 +13,12 @@ const AWS = require('aws-sdk');
 AWS.config.update({ region: process.env.AWS_REGION || 'us-east-1' });
 
 const cloudwatchlogs = new AWS.CloudWatchLogs();
+const { sendMetric } = require('./metrics');
 
 const LOG_GROUP = process.env.CW_LOG_GROUP || 'AuthServiceLogs';
 const LOG_STREAM = process.env.CW_LOG_STREAM || 'BackendStream';
 let sequenceToken = null;
 
-// Envía logs a CloudWatch
 async function sendToCloudWatch(message) {
   try {
     const params = {
@@ -85,6 +85,7 @@ async function main() {
       const log = `[${new Date().toISOString()}] Cuenta creada: ${account_id}`;
       console.log(log);
       await sendToCloudWatch(log);
+      await sendMetric("CuentaCreada");
 
       return res.status(200).json({ account_id });
     } catch (err) {
@@ -102,6 +103,7 @@ async function main() {
         const log = `[${new Date().toISOString()}] /login error: account_id requerido`;
         console.warn(log);
         await sendToCloudWatch(log);
+        await sendMetric("LoginAusente");
         return res.status(400).json({ error: 'account_id_required' });
       }
 
@@ -110,6 +112,7 @@ async function main() {
         const log = `[${new Date().toISOString()}] /login error: cuenta no encontrada (${account_id})`;
         console.warn(log);
         await sendToCloudWatch(log);
+        await sendMetric("InicioSesionFallido");
         return res.status(404).json({ error: 'account_not_found' });
       }
 
@@ -118,12 +121,14 @@ async function main() {
       const log = `[${new Date().toISOString()}] /login correcto para cuenta ${account_id}`;
       console.log(log);
       await sendToCloudWatch(log);
+      await sendMetric("InicioSesionExitoso");
 
       return res.status(200).json({ token, expires_in: JWT_EXPIRES_IN });
     } catch (err) {
       const log = `[${new Date().toISOString()}] /login error interno: ${err.message}`;
       console.error(log);
       await sendToCloudWatch(log);
+      await sendMetric("LoginInternalError");
       return res.status(500).json({ error: 'internal_error' });
     }
   });
@@ -135,6 +140,7 @@ async function main() {
       const log = `[${new Date().toISOString()}] /whoami error: token ausente`;
       console.warn(log);
       await sendToCloudWatch(log);
+      await sendMetric("TokenAusente");
       return res.status(401).json({ error: 'missing_token' });
     }
 
@@ -146,12 +152,14 @@ async function main() {
       const log = `[${new Date().toISOString()}] /whoami éxito: ${JSON.stringify(payload)}`;
       console.log(log);
       await sendToCloudWatch(log);
+      await sendMetric("WhoamiExitoso");
 
       return res.json({ ok: true, payload });
     } catch (err) {
       const log = `[${new Date().toISOString()}] /whoami token inválido: ${err.message}`;
       console.warn(log);
       await sendToCloudWatch(log);
+      await sendMetric("TokenInvalido");
       return res.status(401).json({ error: 'invalid_token', message: err.message });
     }
   });
