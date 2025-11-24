@@ -1,0 +1,23 @@
+pipeline {
+    agent { label 'docker' }
+
+    stages {
+        stage('Print Message') {
+            steps {
+                echo "Hola desde el agente Docker"
+            }
+        }
+
+        stage('List Workspace') {
+            steps {
+                sh 'ls -la'
+            }
+        }
+
+        stage('Print Environment') {
+            steps {
+                sh 'printenv'
+            }
+        }
+    }
+}

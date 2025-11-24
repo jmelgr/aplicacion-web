@@ -1,0 +1,34 @@
+jenkins:
+  systemMessage: "Jenkins configurado automáticamente vía JCasC"
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "grupo6"
+          password: "grupo6"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  clouds:
+    - docker:
+        name: "docker-dind-cloud"
+        dockerApi:
+          dockerHost:
+            uri: "tcp://jenkins-dind:2375"
+        templates:
+          - name: "docker-agent"
+            labelString: "docker"
+            dockerTemplateBase:
+              image: "jenkins/agent:latest"
+              user: "jenkins"
+              mounts:
+                - "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
+        exposeDockerHost: true
+
+tool:
+  git:
+    installations:
+      - name: git
+        home: /usr/bin/git

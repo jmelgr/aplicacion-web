@@ -1,0 +1,13 @@
+configuration-as-code:2006.v001a_2ca_6b_574
+git:5.8.0
+workflow-aggregator:608.v67378e9d3db_1
+pipeline-utility-steps:2.20.0
+credentials-binding:702.vfe613e537e88
+ssh-agent:386.v36cc0c7582f0
+docker-workflow:634.vedc7242b_eda_7
+docker-plugin:1308.vff6e33248305
+terraform:1.0.10
+ansible:588.v2a_a_a_f345e34f
+nodejs:1.6.6
+aws-credentials:254.v978a_5e206a_d7
+pipeline-aws:1.45
